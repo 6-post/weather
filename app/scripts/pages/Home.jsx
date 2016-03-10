@@ -1,8 +1,10 @@
 import React from 'react';
 import AbstractComponent from '../components/AbstractComponent.jsx';
-import ItemList from '../components/ItemList.jsx';
-import ItemStore from '../stores/ItemStore';
-import ItemActionCreator from '../creators/ItemActionCreator';
+import Wrapper from '../components/Wrapper.jsx';
+import Loading from '../components/Loading.jsx';
+import ResultСountry from '../components/ResultСountry.jsx';
+import CountryStore from '../stores/CountryStore';
+import APIweatherActionCreator from '../creators/APIweatherActionCreator';
 
 class Home extends AbstractComponent {
   /**
@@ -11,11 +13,13 @@ class Home extends AbstractComponent {
   constructor(props){
     super(props);
 
+    console.log(props);
+
     this.state = {
       /**
-      * Items
+      * country
       */
-      items : [],
+      country : {},
       /**
       * Loading state
       */
@@ -29,7 +33,21 @@ class Home extends AbstractComponent {
   getStoresConfig() {
     return [
       {
-        store: ItemStore,
+        store: CountryStore,
+        eventName: 'change',
+        callback: this.storeChangeHandler.bind(this),
+      },
+    ];
+  }
+
+
+  /**
+   * @inheritdoc
+   */
+  getStoresConfig() {
+    return [
+      {
+        store: CountryStore,
         eventName: 'change',
         callback: this.storeChangeHandler.bind(this),
       },
@@ -41,9 +59,16 @@ class Home extends AbstractComponent {
    */
   storeChangeHandler() {
     this.setState({
-      items: ItemStore.get('items'),
-      loading: ItemStore.get('loading'),
+      country: CountryStore.get('country'),
+      loading: CountryStore.get('loading'),
     });
+  }
+
+  _onHandlerChange(event) {
+    if (event.target.value != '') {
+      APIweatherActionCreator.fetchWeather(event.target.value);
+     // console.log(this.state.data);
+    }
   }
 
   /**
@@ -51,8 +76,8 @@ class Home extends AbstractComponent {
    */
   componentDidMount() {
     super.componentDidMount();
-    
-    ItemActionCreator.loadItems();
+
+    APIweatherActionCreator.fetchWeather();
   }
 
   /**
@@ -60,10 +85,13 @@ class Home extends AbstractComponent {
    */
   render() {
     return (
-      <div>
-        <h1>Home Page</h1>
-        <ItemList { ...this.state } />
-      </div>
+        <Wrapper>
+          <input onChange={this._onHandlerChange.bind(this)} className="input" placeholder="Введите название города"/>
+          <ResultСountry data={this.state.country}/>
+          <Loading loading={this.state.loading}>
+
+          </Loading>
+        </Wrapper>
     );
   }
 }
